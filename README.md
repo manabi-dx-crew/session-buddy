@@ -7,11 +7,6 @@
 ### 🎯 コンセプト
 日本の勉強会特有の「質問しづらい雰囲気」を打破し、参加者の本音を引き出すAIエージェント
 
-### 🏆 チーム: Manabi DX Crew
-- リーダー: mastom-toki
-- メンバー: zazen-inu（座禅いぬ）
-- メンバー: M_R_K_W
-- メンバー: たまちゃん
 
 ### 📚 関連リポジトリ
 - [第2回提出作品 - Growth Buddy (アーカイブ済み)](https://github.com/manabi-dx-crew/growth-buddy)
