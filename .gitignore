@@ -54,3 +54,6 @@ cache/
 # Google Cloud
 service-account-key.json
 credentials.json
+
+# Project documentation (local only)
+../PROJECT_SUMMARY.md
