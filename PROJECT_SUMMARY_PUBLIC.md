@@ -292,4 +292,3 @@ gcloud compute ssh dify-session-buddy --zone=asia-northeast1-c --command="free -
 - `[PROJECT_NUMBER]` → 実際のGCPプロジェクト番号
 - `[RANDOM_ID]` → 実際のCloud RunエイリアスID
 
-**機密情報を含む完全版は `PROJECT_SUMMARY.md` をご確認ください。**
