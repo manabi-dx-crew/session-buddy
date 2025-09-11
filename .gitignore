@@ -57,3 +57,9 @@ credentials.json
 
 # Project documentation (local only)
 ../PROJECT_SUMMARY.md
+
+# Avatar UI Integration specific
+avatar-ui-integration/venv/
+avatar-ui-integration/__pycache__/
+avatar-ui-integration/*.pyc
+avatar-ui-integration/.env

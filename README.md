@@ -7,11 +7,24 @@
 ### 🎯 コンセプト
 日本の勉強会特有の「質問しづらい雰囲気」を打破し、参加者の本音を引き出すAIエージェント
 
+### 📁 プロジェクト構成
+```
+session-buddy/
+├── avatar-ui-integration/          # メインアプリケーション（カスタマイズ版）
+│   ├── app.py                     # Flaskアプリケーション
+│   ├── static/                    # フロントエンドリソース
+│   └── templates/                 # HTMLテンプレート
+├── vendor/avatar-ui-core/         # 元のavatar-ui-core（参照用）
+├── docs/                          # ドキュメント
+└── PROJECT_SUMMARY_PUBLIC.md      # プロジェクト概要
+```
+
 
 ### 📚 関連リポジトリ
 - [第2回提出作品 - Growth Buddy (アーカイブ済み)](https://github.com/manabi-dx-crew/growth-buddy)
 - [共通Difyインフラ](https://github.com/manabi-dx-crew/dify/tree/hackathon-3)
 - [UIコンポーネント](https://github.com/manabi-dx-crew/session-buddy-ui)
+- [avatar-ui-core (元のリポジトリ)](https://github.com/sito-sikino/avatar-ui-core)
 
 ### 🔧 技術スタック
 - **Backend**: Python 3.9+, Flask
@@ -59,7 +72,10 @@ python app.py
 
 
 ### 📖 ドキュメント
-詳細なドキュメントは[docs/](./docs)フォルダを参照してください。
+- [プロジェクト概要](./PROJECT_SUMMARY_PUBLIC.md) - プロジェクトの詳細情報
+- [Avatar UI統合](./AVATAR_UI_INTEGRATION.md) - avatar-ui-core統合の詳細
+- [Dify API ガイド](./docs/dify_api_guide.md) - Dify API使用方法
+- [詳細ドキュメント](./docs/) - その他のドキュメント
 
 ### 📄 ライセンス
 MIT License
