@@ -2,14 +2,24 @@
  * チャット機能モジュール
  * メッセージの送受信とUI更新を管理
  */
+import { ResponseOptimizer } from './response-optimizer.js';
+
 export class ChatManager {
     constructor(settings, animationManager) {
         this.settings = settings;
         this.animationManager = animationManager;
         this.output = document.getElementById('output');
         this.input = document.getElementById('input');
+        this.responseOptimizer = new ResponseOptimizer();
+        this.isFirstMessage = true; // 初回メッセージフラグ
         
         this.initEventListeners();
+    }
+
+    // アバター切り替え時の更新
+    updateAvatar(avatarName) {
+        this.settings.updateAvatarName(avatarName);
+        console.log(`ChatManager: Avatar name updated to ${avatarName}`);
     }
 
     // イベントリスナー初期化
@@ -60,6 +70,7 @@ export class ChatManager {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
+            let fullResponse = ''; // 完全な応答を蓄積
             
             // アニメーション開始
             this.animationManager.startTalking();
@@ -77,6 +88,7 @@ export class ChatManager {
                         try {
                             const data = JSON.parse(line.slice(6));
                             if (data.delta) {
+                                fullResponse += data.delta; // 完全な応答を蓄積
                                 // タイプライター効果で文字を追加
                                 await this.animationManager.appendText(aiTextElement, data.delta);
                                 this.scrollToBottom();
@@ -85,6 +97,29 @@ export class ChatManager {
                             console.warn('Failed to parse SSE data:', e);
                         }
                     }
+                }
+            }
+            
+            // ストリーミング完了後に応答を最適化（必要に応じて）
+            if (fullResponse && this.responseOptimizer.config.optimizeForSession) {
+                const optimizedResponse = this.responseOptimizer.optimize(fullResponse);
+                if (optimizedResponse !== fullResponse) {
+                    // 最適化された応答で置き換え
+                    aiTextElement.textContent = optimizedResponse;
+                }
+            }
+            
+            // 初回メッセージの処理
+            if (this.isFirstMessage && window.initialPromptsManager && fullResponse) {
+                const followUp = window.initialPromptsManager.generateFollowUp(
+                    message,
+                    window.initialPromptsManager.analyzeUserResponse(message)
+                );
+                this.isFirstMessage = false;
+                
+                if (followUp && followUp !== fullResponse) {
+                    // フォローアップメッセージで置き換え
+                    aiTextElement.textContent = followUp;
                 }
             }
             
@@ -108,8 +143,26 @@ export class ChatManager {
         
         const data = await response.json();
         
+        // AIレスポンスを最適化
+        const optimizedResponse = this.responseOptimizer.optimize(data.response);
+        
+        // 初回メッセージの場合は特別処理
+        if (this.isFirstMessage && window.initialPromptsManager) {
+            const followUp = window.initialPromptsManager.generateFollowUp(
+                this.input.value || 'こんにちは', 
+                window.initialPromptsManager.analyzeExpectedResponse(optimizedResponse)
+            );
+            this.isFirstMessage = false;
+            
+            // フォローアップがある場合は使用
+            if (followUp && followUp !== optimizedResponse) {
+                await this.addLine(followUp, 'ai');
+                return;
+            }
+        }
+        
         // AIレスポンスをタイプライター効果で表示
-        await this.addLine(data.response, 'ai');
+        await this.addLine(optimizedResponse, 'ai');
     }
 
     // メッセージを画面に追加

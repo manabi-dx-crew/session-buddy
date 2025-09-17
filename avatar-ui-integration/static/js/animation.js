@@ -21,8 +21,27 @@ export class AnimationManager {
         this.talkingInterval = setInterval(() => {
             const imagePath = this.settings.getAvatarImagePath(!mouthOpen);
             this.avatarImg.src = imagePath;
+            console.log(`AnimationManager: Mouth animation - mouthOpen: ${!mouthOpen}, imagePath: ${imagePath}`);
             mouthOpen = !mouthOpen;
         }, this.settings.mouthAnimationInterval);
+    }
+
+    // アバター画像の動的更新（アバター切り替え時）
+    updateAvatarImages(idleImage, talkImage) {
+        // 設定を更新
+        this.settings.updateAvatarImages(idleImage, talkImage);
+        
+        // 現在話していない場合は、新しいアイドル画像に切り替え
+        if (!this.talkingInterval) {
+            const timestamp = new Date().getTime();
+            // 設定から正しい画像パスを取得
+            this.avatarImg.src = `${this.settings.getAvatarImagePath(true)}?t=${timestamp}`;
+            console.log(`AnimationManager: Updated avatar image to ${idleImage} (idle state)`);
+        } else {
+            // 話している場合は、口パクアニメーションを再開して新しい画像を使う
+            console.log(`AnimationManager: Restarting mouth animation with new images - idle: ${idleImage}, talk: ${talkImage}`);
+            this.startMouthAnimation();
+        }
     }
 
     // 口パクアニメーション停止

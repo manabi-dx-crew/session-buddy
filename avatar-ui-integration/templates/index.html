@@ -8,13 +8,52 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <!-- ターミナル風UI -->
-    <div class="terminal">
+    <!-- ウェルカムスクリーン -->
+    <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-terminal">
+            <div class="welcome-header">
+                <div class="line system">&gt; SYSTEM: Initializing {{ config.avatar_full_name }}...</div>
+                <div class="line system">&gt; SYSTEM: Connection Established</div>
+                <div class="line system">&gt; SYSTEM: Welcome to Session Buddy</div>
+            </div>
+            
+            <div class="welcome-content">
+                <div class="welcome-avatar">
+                    <img src="/static/images/{{ config.avatar_image_idle }}" alt="{{ config.avatar_name|upper }}">
+                    <div class="avatar-name">{{ config.avatar_name|upper }}</div>
+                </div>
+                
+                <div class="welcome-description">
+                    <div class="line info">&gt; INFO: AI学習アシスタントシステム</div>
+                    <div class="line info">&gt; INFO: 勉強会・LT会での学習サポート</div>
+                    <div class="line info">&gt; INFO: 質問・議論・知識共有が可能</div>
+                    <div class="line warning">&gt; WARNING: 実験的システムです</div>
+                    <div class="line warning">&gt; WARNING: 個人情報の入力はお控えください</div>
+                </div>
+                
+                <div class="welcome-instructions">
+                    <div class="line prompt">&gt; PROMPT: 開始するには「ENTER」を押してください</div>
+                    <div class="line prompt">&gt; PROMPT: 最初に君のコードネームを教えてくれ！</div>
+                </div>
+                
+                <div class="welcome-actions">
+                    <button class="enter-btn" id="enter-btn">ENTER SYSTEM</button>
+                    <div class="welcome-tips">
+                        <span>Tip: このシステムは勉強会参加者向けのAIアシスタントです</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- メインターミナルUI（初期は非表示） -->
+    <div class="terminal" id="main-terminal" style="display: none;">
         <div class="chat-area">
             <div class="chat-container">
                 <!-- チャット出力エリア -->
                 <div class="output" id="output">
                     <div class="line system">&gt; SYSTEM: {{ config.avatar_full_name }} Online</div>
+                    <div class="line system">&gt; SYSTEM: 君のコードネームを教えてくれ！</div>
                 </div>
                 
                 <!-- アバター表示エリア -->

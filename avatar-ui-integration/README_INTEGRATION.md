@@ -28,8 +28,10 @@ python start_app.py
 - モデル: gemini-2.0-flash
 
 ### Dify使用時
-- DifyのAPIキーが必要
-- ベースURL: https://dify-session-buddy-475598051239.asia-northeast1.run.app
+- **現在のワークフロー**: SessionBuddy_v2-002 ⭐️
+- **現在のAPIキー**: app-xxxxxxxxxxxxxxxxxxxxxxxx (環境変数で設定)
+- **ベースURL**: https://dify-session-buddy-475598051239.asia-northeast1.run.app
+- **最終更新**: 2025年9月17日
 
 ## 📁 ファイル構成
 
@@ -93,8 +95,24 @@ python test_dify_connection.py
 
 Cloud Runへのデプロイは、既存のdify-deployディレクトリの手順を参考にしてください。
 
+## 🚨 重要なトラブル履歴（2025年9月17日解決済み）
+
+### **Dify 500エラー問題**
+- **症状**: Avatar UI → Dify連携時に500 Internal Server Error
+- **原因**: Difyデータベース内の重複レコード（`MultipleResultsFound`エラー）
+- **解決**: データベース重複削除、テナント権限整理、サービス再起動
+- **詳細**: `../PROJECT_SUMMARY.md`の「Avatar UI - Dify連携トラブル解決作業」参照
+
+### **APIキー履歴**
+| 期間 | ワークフロー | APIキー | 状態 |
+|------|------------|---------|------|
+| 2025/09/17〜 | SessionBuddy_v2-002 | app-xxxxxxxx (最新) | ✅ 現在使用中 |
+| 2025/09/17 | Session Buddy_v007 | app-xxxxxxxx (v007) | 🔄 DB問題で切り替え |
+| 〜2025/09/17 | Session Buddy_v005 | app-xxxxxxxx (v005) | ❌ 廃止 |
+
 ## 📝 注意事項
 
 - APIキーは環境変数で管理
 - ストリーミングはDifyプロバイダーのみサポート
 - ローカルテスト時は`0.0.0.0`でバインドしてアクセス可能
+- **重要**: Dify 500エラーが発生した場合は、データベース重複レコードを疑う

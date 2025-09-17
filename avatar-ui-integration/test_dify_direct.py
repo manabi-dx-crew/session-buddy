@@ -1,113 +1,51 @@
 #!/usr/bin/env python3
 """
-Dify接続テストスクリプト（直接設定版）
+Avatar UIと同じ設定でDify APIを直接テスト
 """
-import os
 import requests
-import json
+import os
 
-# 環境変数から設定（Cloud Run経由でDifyにアクセス）
-DIFY_BASE_URL = os.environ.get('DIFY_BASE_URL', 'https://dify-session-buddy-475598051239.asia-northeast1.run.app')
-DIFY_API_KEY = os.environ.get('DIFY_API_KEY', 'your-api-key-here')
+# Cloud Runと同じ環境変数を設定
+DIFY_BASE_URL = os.getenv("DIFY_BASE_URL", "https://dify-session-buddy-475598051239.asia-northeast1.run.app")
+DIFY_API_KEY = os.getenv("DIFY_API_KEY", "your-dify-api-key-here")
 
-def test_dify_connection():
-    """Difyとの接続をテスト"""
-    print(f"🔍 Dify接続テスト開始...")
-    print(f"📍 ベースURL: {DIFY_BASE_URL}")
-    print(f"🔑 APIキー: {DIFY_API_KEY[:10]}...")
-    
-    # 1. ヘルスチェック
+def test_dify_direct():
+    """Dify APIを直接テスト"""
     try:
-        print("\n1️⃣ ヘルスチェック...")
-        response = requests.get(f"{DIFY_BASE_URL}/health", timeout=10)
-        print(f"   ステータス: {response.status_code}")
-        if response.status_code == 200:
-            print("   ✅ ヘルスチェック成功")
-        else:
-            print("   ⚠️ ヘルスチェック警告")
-    except Exception as e:
-        print(f"   ❌ ヘルスチェック失敗: {e}")
-    
-    # 2. API接続テスト
-    try:
-        print("\n2️⃣ API接続テスト...")
         payload = {
             "inputs": {},
-            "query": "こんにちは、テストです",
+            "query": "こんにちは、直接テストです",
             "response_mode": "blocking",
-            "user": "test-user"
+            "user": "avatar-ui-user"
         }
         headers = {
             "Authorization": f"Bearer {DIFY_API_KEY}",
             "Content-Type": "application/json"
         }
         
+        print(f"🔗 リクエスト先: {DIFY_BASE_URL}/v1/chat-messages")
+        print(f"🔑 APIキー: {DIFY_API_KEY[:15]}...")
+        print(f"📨 ペイロード: {payload}")
+        
         response = requests.post(
-            f"{DIFY_BASE_URL}/v1/chat-messages",
+            f"{DIFY_BASE_URL.rstrip('/')}/v1/chat-messages",
             headers=headers,
             json=payload,
             timeout=30
         )
         
-        print(f"   ステータス: {response.status_code}")
+        print(f"📊 HTTPステータス: {response.status_code}")
+        print(f"📋 レスポンスヘッダー: {dict(response.headers)}")
+        print(f"📄 レスポンス内容: {response.text}")
         
         if response.status_code == 200:
             data = response.json()
-            print("   ✅ API接続成功")
-            print(f"   レスポンス: {data.get('answer', '')[:100]}...")
+            print(f"✅ 成功: {data.get('answer', 'No answer field')}")
         else:
-            print(f"   ❌ API接続失敗: {response.text}")
+            print(f"❌ エラー: {response.status_code} - {response.text}")
             
     except Exception as e:
-        print(f"   ❌ API接続エラー: {e}")
-    
-    # 3. ストリーミングテスト
-    try:
-        print("\n3️⃣ ストリーミングテスト...")
-        payload = {
-            "inputs": {},
-            "query": "短いテストメッセージをお願いします",
-            "response_mode": "streaming",
-            "user": "test-user"
-        }
-        headers = {
-            "Authorization": f"Bearer {DIFY_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        response = requests.post(
-            f"{DIFY_BASE_URL}/v1/chat-messages",
-            headers=headers,
-            json=payload,
-            stream=True,
-            timeout=30
-        )
-        
-        print(f"   ステータス: {response.status_code}")
-        
-        if response.status_code == 200:
-            print("   ✅ ストリーミング接続成功")
-            print("   ストリーミングデータ:")
-            chunk_count = 0
-            for line in response.iter_lines():
-                if line and line.startswith(b'data: '):
-                    data_str = line[6:].decode('utf-8')
-                    if data_str.strip() == '[DONE]':
-                        break
-                    try:
-                        data = json.loads(data_str)
-                        answer = data.get('answer', '')
-                        if answer:
-                            print(f"     {answer}", end='', flush=True)
-                            chunk_count += 1
-                    except json.JSONDecodeError:
-                        continue
-            print(f"\n   📊 受信チャンク数: {chunk_count}")
-        else:
-            print(f"   ❌ ストリーミング接続失敗: {response.text}")
-            
-    except Exception as e:
-        print(f"   ❌ ストリーミングエラー: {e}")
+        print(f"💥 例外発生: {str(e)}")
 
 if __name__ == "__main__":
-    test_dify_connection()
+    test_dify_direct()

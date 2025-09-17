@@ -62,9 +62,19 @@ avatar-ui-integration/
 
 ## 🔑 Difyワークフロー設定
 
-**使用ワークフロー**: `Session Buddy_v005`
-- **APIキー**: `{DIFY_API_KEY}` (環境変数で設定)
-- **注意**: 他のワークフローを使用する場合は、別途ワークフロー用のDify APIキーを発行する必要があります
+**現在のワークフロー**: `SessionBuddy_v2-002` ⭐️ **最新**
+- **APIキー**: `app-xxxxxxxxxxxxxxxxxxxxxxxx` (環境変数で設定)
+- **更新日**: 2025年9月17日
+- **状態**: 本番稼働中 ✅
+
+### 過去のワークフロー履歴
+| ワークフロー名 | APIキー | 使用期間 | 状態 |
+|---------------|---------|----------|------|
+| `SessionBuddy_v2-002` | `app-xxxxxxxx (最新)` | 2025/09/17〜 | ✅ 現在使用中 |
+| `Session Buddy_v007` | `app-xxxxxxxx (v007)` | 2025/09/17 | 🔄 データベース問題で切り替え |
+| `Session Buddy_v005` | `app-xxxxxxxx (v005)` | 〜2025/09/17 | ❌ 廃止 |
+
+**注意**: 他のワークフローを使用する場合は、別途ワークフロー用のDify APIキーを発行する必要があります
 
 ## 🚀 デプロイ手順
 
@@ -104,7 +114,26 @@ export DIFY_API_KEY="your-dify-api-key-here"
 
 ## 🐛 トラブルシューティング
 
-### よくある問題
+### 2025年9月17日解決済み問題（重要！）
+
+#### **問題1: Dify 500エラー（MultipleResultsFound）**
+- **症状**: Avatar UI → Dify連携時に500 Internal Server Error
+- **原因**: Difyデータベース内の重複レコード（データ復旧作業の影響）
+- **解決**: 
+  1. `end_users`テーブルの重複`session_id`削除
+  2. `tenant_account_joins`テーブルの複数owner削除（1つのテナントに6人のownerが存在）
+  3. 古いワークフローとapp_model_config削除・再作成
+- **結果**: HTTP 200正常応答、日本語応答確認済み
+
+#### **問題2: APIキー変更時の動作確認**
+- **症状**: 新しいAPIキー適用後の動作不明
+- **解決**: 
+  1. Dify API直接テスト（`curl`）でHTTP 200確認
+  2. Cloud Run環境変数更新（`gcloud run services update`）
+  3. Avatar UI経由テストで完全動作確認
+- **教訓**: APIキー変更時は段階的テストが重要
+
+### よくある問題（一般的）
 
 1. **404エラー**: DifyのAPIエンドポイントが正しくない
    - 解決: `/v1/chat-messages`を使用
@@ -115,9 +144,29 @@ export DIFY_API_KEY="your-dify-api-key-here"
 3. **AI初期化エラー**: 環境変数が設定されていない
    - 解決: `app.py`で自動初期化実装済み
 
-### ログ確認
+4. **Dify 500エラー**: データベース整合性問題
+   - 解決: VM内でPostgreSQLクエリによる重複レコード削除
+   - 詳細: `PROJECT_SUMMARY.md`の「完全データ復旧作業」参照
+
+### 診断コマンド集
+
+#### Cloud Runログ確認
 ```bash
 gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=avatar-ui-core-service"
+```
+
+#### Dify API直接テスト
+```bash
+curl -X POST "https://dify-session-buddy-475598051239.asia-northeast1.run.app/v1/chat-messages" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"inputs": {}, "query": "テスト", "response_mode": "blocking", "user": "test-user"}'
+```
+
+#### Difyデータベース確認（VM内）
+```bash
+gcloud compute ssh dify-production --zone=asia-northeast1-c
+sudo docker-compose exec db psql -U postgres -d dify -c "SELECT COUNT(*) FROM tenant_account_joins WHERE role = 'owner';"
 ```
 
 ## 📊 技術スタック
@@ -153,6 +202,8 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 
 ---
 
-**最終更新**: 2025年9月11日
-**バージョン**: 1.0.0
+**最終更新**: 2025年9月17日
+**バージョン**: 1.1.0
 **ステータス**: 本番稼働中 ✅
+**現在のワークフロー**: SessionBuddy_v2-002
+**重要**: Dify 500エラー問題解決済み（データベース重複削除完了）
