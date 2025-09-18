@@ -116,33 +116,12 @@ export class InitialPromptsManager {
     
     /**
      * 初期プロンプトをシステムメッセージとして表示
+     * Dify APIのみを使用するため完全に無効化
      */
     displayInitialPrompt() {
-        const selectedPrompt = this.selectPrompt();
-        
-        // システムメッセージに追加
-        const output = document.getElementById('output');
-        if (output) {
-            const promptLine = document.createElement('div');
-            promptLine.className = 'line system';
-            promptLine.textContent = `> SYSTEM: ${selectedPrompt}`;
-            output.appendChild(promptLine);
-            
-            // スクロール
-            output.scrollTop = output.scrollHeight;
-        }
-        
-        // ウェルカムスクリーンにも反映
-        const welcomeInstructions = document.querySelector('.welcome-instructions');
-        if (welcomeInstructions) {
-            const promptElements = welcomeInstructions.querySelectorAll('.line.prompt');
-            if (promptElements.length > 1) {
-                promptElements[1].textContent = `> PROMPT: ${selectedPrompt}`;
-            }
-        }
-        
-        console.log(`Initial prompt displayed: ${selectedPrompt}`);
-        return selectedPrompt;
+        // 初期プロンプトは表示しない（Dify APIのみ使用）
+        console.log('Initial prompt display disabled - using Dify API only');
+        return null;
     }
     
     /**

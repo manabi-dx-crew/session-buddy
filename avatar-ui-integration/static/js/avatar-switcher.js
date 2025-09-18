@@ -28,8 +28,8 @@ export class AvatarSwitcher {
                 description: 'フレンドリーで親しみやすいいぬのアシスタント'
             },
             {
-                id: 'default-spectra',
-                name: 'デフォルト',
+                id: 'spectra',
+                name: 'Spectra',
                 displayName: 'SPECTRA',
                 images: {
                     idle: 'idle.png',
@@ -37,7 +37,7 @@ export class AvatarSwitcher {
                 },
                 personality: 'professional',
                 tone: 'formal',
-                description: 'デフォルトのSpectraアシスタント'
+                description: 'プロフェッショナルなSpectraアシスタント'
             }
         ];
     }

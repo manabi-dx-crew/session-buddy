@@ -28,10 +28,10 @@ AI_PROVIDER = os.environ.get('AI_PROVIDER', 'gemini')  # 使用するAIプロバ
 # ===========================================
 
 # アバター設定
-AVATAR_NAME = os.getenv('AVATAR_NAME', 'Spectra')
-AVATAR_FULL_NAME = os.getenv('AVATAR_FULL_NAME', 'Spectra Communicator')
-AVATAR_IMAGE_IDLE = os.getenv('AVATAR_IMAGE_IDLE', 'idle.png')
-AVATAR_IMAGE_TALK = os.getenv('AVATAR_IMAGE_TALK', 'talk.png')
+AVATAR_NAME = os.getenv('AVATAR_NAME', 'INU BUDDY')
+AVATAR_FULL_NAME = os.getenv('AVATAR_FULL_NAME', 'INU BUDDY')
+AVATAR_IMAGE_IDLE = os.getenv('AVATAR_IMAGE_IDLE', 'idle_inu.png')
+AVATAR_IMAGE_TALK = os.getenv('AVATAR_IMAGE_TALK', 'talk_inu.png')
 
 # AI性格設定（AVATAR_NAMEに依存）
 SYSTEM_INSTRUCTION = os.getenv(

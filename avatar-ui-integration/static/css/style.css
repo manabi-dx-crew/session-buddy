@@ -337,19 +337,53 @@ body {
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
+    body {
+        overflow-y: auto; /* スマホでスクロール可能にする */
+    }
+    
+    .welcome-screen {
+        padding: 10px;
+        align-items: flex-start; /* 上寄せに変更 */
+        justify-content: flex-start;
+    }
+    
     .welcome-terminal {
-        padding: 20px;
+        padding: 15px;
         width: 95%;
+        margin: 10px 0;
+        max-height: calc(100vh - 20px);
+        overflow-y: auto; /* スクロール可能にする */
+    }
+    
+    .welcome-content {
+        gap: 15px; /* 間隔を詰める */
+    }
+    
+    .welcome-avatar {
+        margin-bottom: 10px; /* マージンを減らす */
     }
     
     .welcome-avatar img {
-        width: 100px;
-        height: 100px;
+        width: 80px;
+        height: 80px;
+    }
+    
+    .welcome-description, .welcome-instructions {
+        margin: 8px 0; /* マージンを減らす */
+    }
+    
+    .welcome-actions {
+        margin-top: 15px; /* マージンを減らす */
     }
     
     .enter-btn {
-        padding: 10px 25px;
+        padding: 8px 20px;
         font-size: 14px;
+    }
+    
+    .welcome-tips {
+        font-size: 11px;
+        margin-top: 8px;
     }
     
     #avatar-settings-panel {

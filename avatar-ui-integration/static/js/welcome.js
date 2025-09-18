@@ -44,6 +44,9 @@ export class WelcomeManager {
             this.mainTerminal.style.display = 'flex';
             this.mainTerminal.style.animation = 'fadeIn 0.5s ease-out';
             
+            // アバターを正しく設定（INU BUDDYに統一）
+            this.setupAvatarDisplay();
+            
             // 入力フィールドにフォーカス
             const inputField = document.getElementById('input');
             if (inputField) {
@@ -62,6 +65,26 @@ export class WelcomeManager {
             
             console.log('System entered successfully! Welcome to Session Buddy! 🚀');
         }, 500);
+    }
+    
+    /**
+     * アバター表示を正しく設定
+     */
+    setupAvatarDisplay() {
+        // アバター画像をINU BUDDYに設定
+        const avatarImg = document.getElementById('avatar-img');
+        const avatarLabel = document.querySelector('.avatar-label');
+        
+        if (avatarImg) {
+            avatarImg.src = '/static/images/idle_inu.png';
+            avatarImg.alt = 'INU BUDDY';
+        }
+        
+        if (avatarLabel) {
+            avatarLabel.textContent = 'INU BUDDY';
+        }
+        
+        console.log('Avatar display set to INU BUDDY');
     }
     
     /**

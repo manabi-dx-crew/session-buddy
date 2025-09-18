@@ -2,7 +2,8 @@
  * チャット機能モジュール
  * メッセージの送受信とUI更新を管理
  */
-import { ResponseOptimizer } from './response-optimizer.js';
+// ResponseOptimizerを無効化（Dify APIのみ使用）
+// import { ResponseOptimizer } from './response-optimizer.js';
 
 export class ChatManager {
     constructor(settings, animationManager) {
@@ -10,7 +11,8 @@ export class ChatManager {
         this.animationManager = animationManager;
         this.output = document.getElementById('output');
         this.input = document.getElementById('input');
-        this.responseOptimizer = new ResponseOptimizer();
+        // ResponseOptimizerを無効化（Dify APIのみ使用）
+        // this.responseOptimizer = new ResponseOptimizer();
         this.isFirstMessage = true; // 初回メッセージフラグ
         
         this.initEventListeners();
@@ -100,28 +102,9 @@ export class ChatManager {
                 }
             }
             
-            // ストリーミング完了後に応答を最適化（必要に応じて）
-            if (fullResponse && this.responseOptimizer.config.optimizeForSession) {
-                const optimizedResponse = this.responseOptimizer.optimize(fullResponse);
-                if (optimizedResponse !== fullResponse) {
-                    // 最適化された応答で置き換え
-                    aiTextElement.textContent = optimizedResponse;
-                }
-            }
-            
-            // 初回メッセージの処理
-            if (this.isFirstMessage && window.initialPromptsManager && fullResponse) {
-                const followUp = window.initialPromptsManager.generateFollowUp(
-                    message,
-                    window.initialPromptsManager.analyzeUserResponse(message)
-                );
-                this.isFirstMessage = false;
-                
-                if (followUp && followUp !== fullResponse) {
-                    // フォローアップメッセージで置き換え
-                    aiTextElement.textContent = followUp;
-                }
-            }
+            // Dify APIの応答をそのまま使用（上書き処理を無効化）
+            // ResponseOptimizerとInitialPromptsManagerによる上書きを無効化
+            console.log('Dify response received and displayed without modification');
             
             // アニメーション停止
             this.animationManager.stopTalking();
@@ -143,26 +126,11 @@ export class ChatManager {
         
         const data = await response.json();
         
-        // AIレスポンスを最適化
-        const optimizedResponse = this.responseOptimizer.optimize(data.response);
-        
-        // 初回メッセージの場合は特別処理
-        if (this.isFirstMessage && window.initialPromptsManager) {
-            const followUp = window.initialPromptsManager.generateFollowUp(
-                this.input.value || 'こんにちは', 
-                window.initialPromptsManager.analyzeExpectedResponse(optimizedResponse)
-            );
-            this.isFirstMessage = false;
-            
-            // フォローアップがある場合は使用
-            if (followUp && followUp !== optimizedResponse) {
-                await this.addLine(followUp, 'ai');
-                return;
-            }
-        }
+        // Dify APIの応答をそのまま使用（最適化を無効化）
+        console.log('Dify fallback response received and displayed without modification');
         
         // AIレスポンスをタイプライター効果で表示
-        await this.addLine(optimizedResponse, 'ai');
+        await this.addLine(data.response, 'ai');
     }
 
     // メッセージを画面に追加
