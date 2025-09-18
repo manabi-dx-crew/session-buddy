@@ -179,6 +179,38 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 
 ## 🚨 重要なトラブル履歴
 
+### **UI改善・アニメーション同期問題（2025年9月18日解決済み）**
+
+#### **口パクアニメーション長時間継続問題**
+- **症状**: テキスト表示完了後も口パクアニメーションが数秒〜十数秒継続
+- **原因**: タイプライター処理完了と口パクアニメーション停止の非同期問題
+- **解決**: 
+  1. タイプライターキューが空になった時点で500ms後に停止チェック
+  2. ストリーム終了時に200ms後の積極的停止チェック
+  3. 詳細デバッグログ追加
+- **技術的修正**: `static/js/animation.js`の`_processQueue()`と`signalStreamEnd()`メソッド
+- **結果**: 自然な会話体験の実現（最大500msで停止）
+
+#### **テキスト表示の文字欠け問題**  
+- **症状**: 出力テキストが途中から始まる（「私は」などの先頭文字が欠ける）
+- **原因**: 非同期DOM操作でのrace condition、`setTimeout(0)`による遅延
+- **解決**: 
+  1. `setTimeout(0)`を削除し、同期的なDOM要素作成
+  2. `aiTextElement`の即座取得と初回チャンク処理の同期化
+  3. 詳細ログによる処理追跡
+- **技術的修正**: `static/js/chat.js`の`handleStreamedResponse()`メソッド
+- **結果**: 完全なテキスト表示の実現
+
+#### **アバター切り替えとアニメーション連携問題**
+- **症状**: アバター切り替え時に口パクアニメーションが動作しない
+- **原因**: `AnimationManager`に`startTalking()`メソッドが存在しない
+- **解決**: 
+  1. `startTalking()`メソッドを追加
+  2. 設定の動的参照による画像パス生成の改善
+  3. ポップアップ画面でのデフォルトアバター設定の修正
+- **技術的修正**: `static/js/animation.js`, `static/js/app.js`
+- **結果**: アバター切り替えと口パクアニメーションの完全連携
+
 ### **チャット応答上書き問題（2025年9月18日解決済み）**
 - **症状**: Dify APIの応答が表示された後、すぐに別の応答に上書きされる
 - **原因**: UI内部システムの2つの処理がDifyの応答を上書き
@@ -287,7 +319,47 @@ python test_dify_direct.py
 - サービス再起動
 - 詳細は`../PROJECT_SUMMARY.md`の「Avatar UI - Dify連携トラブル解決作業」参照
 
-#### 5. ストリーミングが動作しない
+#### 5. 口パクアニメーション長時間継続問題
+**症状**: テキスト表示完了後も口パクアニメーションが数秒〜十数秒継続する
+
+**原因**: 
+- タイプライター処理完了と口パクアニメーション停止の非同期問題
+- `stream_end`イベント待ちによる無駄な継続
+
+**解決方法**:
+- 既に修正済み（2025年9月18日）
+- 最大500msで自動停止するように改善
+- 問題が再発した場合は`animation.js`の`_processQueue()`と`signalStreamEnd()`を確認
+
+**診断方法**:
+```javascript
+// ブラウザコンソールで確認すべきログ
+"AnimationManager: Typewriter queue is empty, isTyping set to false"
+"AnimationManager: Queue still empty after delay, stopping animation"
+"AnimationManager: stopTalking() called"
+```
+
+#### 6. テキスト表示の文字欠け問題
+**症状**: 出力テキストが途中から始まる（「、勉強会運営...」など）
+
+**原因**: 
+- 非同期DOM操作でのrace condition
+- 初回チャンク処理の遅延
+
+**解決方法**:
+- 既に修正済み（2025年9月18日）
+- 同期的なDOM要素作成と処理に変更
+- 問題が再発した場合は`chat.js`の`handleStreamedResponse()`を確認
+
+**診断方法**:
+```javascript
+// ブラウザコンソールで確認すべきログ
+"Creating AI line for first chunk: こんにちは"  // 初回チャンクが正しく処理されている
+"Processing first chunk: こんにちは"
+"aiTextElement found, starting animation"
+```
+
+#### 7. ストリーミングが動作しない
 **症状**: タイプライター効果が表示されない
 
 **解決方法**:

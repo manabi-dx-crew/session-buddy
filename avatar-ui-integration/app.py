@@ -51,15 +51,20 @@ def index():
 @app.route('/api/chat', methods=['POST'])
 def api_chat():
     """ユーザー入力を受信しAI応答を返す（非ストリーミング）"""
-    message = request.json['message']
-    
-    if settings.AI_PROVIDER == 'gemini':
-        response = chat.send_message(message)
-        return jsonify({'response': response.text})
-    elif settings.AI_PROVIDER == 'dify':
-        return _dify_chat_non_streaming(message)
-    else:
-        return jsonify({'error': 'AI_PROVIDERが正しく設定されていません'}), 400
+    try:
+        message = request.json['message']
+        
+        if settings.AI_PROVIDER == 'gemini':
+            if chat is None:
+                return jsonify({'error': 'Gemini初期化エラー'}), 500
+            response = chat.send_message(message)
+            return jsonify({'response': response.text})
+        elif settings.AI_PROVIDER == 'dify':
+            return _dify_chat_non_streaming(message)
+        else:
+            return jsonify({'error': 'AI_PROVIDERが正しく設定されていません'}), 400
+    except Exception as e:
+        return jsonify({'error': f'チャットエラー: {str(e)}'}), 500
 
 @app.route('/api/chat/stream', methods=['POST'])
 def api_chat_stream():
@@ -89,7 +94,7 @@ def _dify_chat_non_streaming(message):
             f"{settings.DIFY_BASE_URL.rstrip('/')}/v1/chat-messages",
             headers=headers,
             json=payload,
-            timeout=30
+            timeout=60  # タイムアウトを60秒に延長
         )
         response.raise_for_status()
         
@@ -120,7 +125,7 @@ def _dify_chat_streaming(message):
             headers=headers,
             json=payload,
             stream=True,
-            timeout=30
+            timeout=60  # タイムアウトを60秒に延長
         )
         response.raise_for_status()
         
@@ -137,16 +142,25 @@ def _dify_chat_streaming(message):
                     
                     try:
                         data = json.loads(data_str)
-                        # Difyのストリーミングレスポンスからanswerを取得
-                        answer = data.get('answer', '')
-                        if answer:
-                            yield f"data: {json.dumps({'delta': answer})}\n\n"
+                        event_type = data.get('event', '')
+                        
+                        # messageイベント: テキストチャンクを送信
+                        if event_type == 'message':
+                            answer = data.get('answer', '')
+                            if answer:
+                                yield f"data: {json.dumps({'delta': answer}, ensure_ascii=False)}\n\n"
+                        
+                        # message_endイベント: ストリーミング完了を通知
+                        elif event_type == 'message_end':
+                            yield f"data: {json.dumps({'event': 'stream_end'}, ensure_ascii=False)}\n\n"
+                            break
+                            
                     except json.JSONDecodeError:
                         continue
         
         return Response(
             event_stream(),
-            mimetype='text/event-stream',
+            mimetype='text/event-stream; charset=utf-8',
             headers={
                 'Cache-Control': 'no-cache',
                 'Connection': 'keep-alive',

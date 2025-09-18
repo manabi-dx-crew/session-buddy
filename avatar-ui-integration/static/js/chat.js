@@ -28,8 +28,14 @@ export class ChatManager {
     initEventListeners() {
         this.input.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter' && this.input.value.trim()) {
-                await this.sendMessage(this.input.value);
+                const message = this.input.value.trim();
+                // 入力欄を即座にクリア
                 this.input.value = '';
+                // 入力欄を無効化
+                this.input.disabled = true;
+                this.input.placeholder = '応答中...';
+                
+                await this.sendMessage(message);
             }
         });
     }
@@ -39,12 +45,20 @@ export class ChatManager {
         // ユーザーメッセージを表示
         this.addLine(message, 'user');
         
+        // 「思考中...」表示を追加
+        this.showThinkingIndicator();
+        
         try {
             // ストリーミング対応のAIレスポンスを取得
             await this.sendMessageStreaming(message);
         } catch (error) {
             console.error('Chat error:', error);
             this.addLine('エラーが発生しました。再試行してください。', 'system');
+        } finally {
+            // 入力欄を再有効化
+            this.input.disabled = false;
+            this.input.placeholder = '';
+            this.input.focus();
         }
     }
 
@@ -62,52 +76,97 @@ export class ChatManager {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // AIメッセージ行を準備
-            const line = document.createElement('div');
-            line.className = 'line ai';
-            line.innerHTML = `<span class="ai-prompt">${this.settings.avatarName}&gt;</span> <span class="ai-text"></span>`;
-            this.output.appendChild(line);
+            // 「思考中...」表示を削除
+            this.removeThinkingIndicator();
             
-            const aiTextElement = line.querySelector('.ai-text');
+            // AIメッセージ行を準備（最初のテキストが来るまで表示しない）
+            let aiLine = null;
+            let aiTextElement = null;
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
             let fullResponse = ''; // 完全な応答を蓄積
             
-            // アニメーション開始
-            this.animationManager.startTalking();
+            // ストリーミング完了フラグ
+            let isStreamingComplete = false;
             
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) break;
+                if (done) {
+                    // ストリームが予期せず終了した場合のフォールバック
+                    isStreamingComplete = true;
+                    break;
+                }
                 
                 buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n');
                 buffer = lines.pop(); // 最後の不完全な行を保持
                 
+                let shouldBreakWhile = false;
                 for (const line of lines) {
                     if (line.startsWith('data: ')) {
                         try {
                             const data = JSON.parse(line.slice(6));
+                            
+                            // テキストデータの処理
                             if (data.delta) {
-                                fullResponse += data.delta; // 完全な応答を蓄積
-                                // タイプライター効果で文字を追加
-                                await this.animationManager.appendText(aiTextElement, data.delta);
-                                this.scrollToBottom();
+                                // 最初のテキストが来たときにAI行を作成
+                                if (!aiLine) {
+                                    console.log('Creating AI line for first chunk:', data.delta);
+                                    
+                                    aiLine = document.createElement('div');
+                                    aiLine.className = 'line ai';
+                                    aiLine.innerHTML = `<span class="ai-prompt">${this.settings.avatarName}&gt;</span> <span class="ai-text"></span>`;
+                                    this.output.appendChild(aiLine);
+                                    
+                                    // DOM要素を即座に取得
+                                    aiTextElement = aiLine.querySelector('.ai-text');
+                                    
+                                    if (aiTextElement) {
+                                        console.log('aiTextElement found, starting animation');
+                                        
+                                        // アニメーション開始（最初のテキスト受信時）
+                                        this.animationManager.startTalking();
+                                        
+                                        // 最初のチャンクを即座に処理
+                                        console.log('Processing first chunk:', data.delta);
+                                        this.animationManager.appendText(aiTextElement, data.delta);
+                                        this.scrollToBottom();
+                                    } else {
+                                        console.error('Failed to find aiTextElement immediately after creation');
+                                    }
+                                } else {
+                                    // 2回目以降のチャンク
+                                    if (aiTextElement) {
+                                        console.log('Processing subsequent chunk:', data.delta);
+                                        this.animationManager.appendText(aiTextElement, data.delta);
+                                        this.scrollToBottom();
+                                    } else {
+                                        console.error('aiTextElement is null for subsequent chunk:', data.delta);
+                                    }
+                                }
+                            }
+                            
+                            // ストリーミング完了イベントの処理
+                            if (data.event === 'stream_end') {
+                                console.log('Received stream_end event from Dify');
+                                isStreamingComplete = true;
+                                shouldBreakWhile = true;
+                                break; // forループを抜ける
                             }
                         } catch (e) {
                             console.warn('Failed to parse SSE data:', e);
                         }
                     }
                 }
+                if (shouldBreakWhile) break;
             }
             
-            // Dify APIの応答をそのまま使用（上書き処理を無効化）
-            // ResponseOptimizerとInitialPromptsManagerによる上書きを無効化
-            console.log('Dify response received and displayed without modification');
-            
-            // アニメーション停止
-            this.animationManager.stopTalking();
+            // ストリーミング完了をAnimationManagerに通知
+            if (isStreamingComplete) {
+                console.log("ChatManager: Stream is complete. Signaling to AnimationManager.");
+                this.animationManager.signalStreamEnd();
+            }
             
         } catch (error) {
             console.error('Streaming error:', error);
@@ -129,8 +188,16 @@ export class ChatManager {
         // Dify APIの応答をそのまま使用（最適化を無効化）
         console.log('Dify fallback response received and displayed without modification');
         
+        // 「思考中...」表示を削除
+        this.removeThinkingIndicator();
+        
         // AIレスポンスをタイプライター効果で表示
         await this.addLine(data.response, 'ai');
+        
+        // アニメーション停止（短時間で終了）
+        setTimeout(() => {
+            this.animationManager.stopTalking();
+        }, 100); // 100msに短縮
     }
 
     // メッセージを画面に追加
@@ -143,12 +210,14 @@ export class ChatManager {
             this.output.appendChild(line);
             this.scrollToBottom();
         } else if (type === 'ai') {
-            // AIメッセージはタイプライター演出
-            line.innerHTML = `<span class="ai-prompt">${this.settings.avatarName}&gt;</span> <span class="ai-text"></span>`;
-            this.output.appendChild(line);
-            
-            const aiTextElement = line.querySelector('.ai-text');
-            await this.animationManager.typeWriter(aiTextElement, text);
+            // AIメッセージはタイプライター演出（テキストがある場合のみ表示）
+            if (text && text.trim()) {
+                line.innerHTML = `<span class="ai-prompt">${this.settings.avatarName}&gt;</span> <span class="ai-text"></span>`;
+                this.output.appendChild(line);
+                
+                const aiTextElement = line.querySelector('.ai-text');
+                await this.animationManager.typeWriter(aiTextElement, text);
+            }
         } else {
             // system メッセージなど
             line.textContent = text;
@@ -160,5 +229,23 @@ export class ChatManager {
     // チャットエリアを最下部にスクロール
     scrollToBottom() {
         this.output.scrollTop = this.output.scrollHeight;
+    }
+    
+    // 「思考中...」表示を追加
+    showThinkingIndicator() {
+        const thinkingLine = document.createElement('div');
+        thinkingLine.className = 'line thinking';
+        thinkingLine.id = 'thinking-indicator';
+        thinkingLine.innerHTML = `<span class="ai-prompt">${this.settings.avatarName}&gt;</span> <span class="thinking-text">思考中...</span>`;
+        this.output.appendChild(thinkingLine);
+        this.scrollToBottom();
+    }
+    
+    // 「思考中...」表示を削除
+    removeThinkingIndicator() {
+        const thinkingLine = document.getElementById('thinking-indicator');
+        if (thinkingLine) {
+            thinkingLine.remove();
+        }
     }
 }

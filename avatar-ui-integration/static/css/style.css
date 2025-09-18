@@ -106,6 +106,22 @@ body {
     padding-left: 10px;
 }
 
+.line.thinking {
+    color: #ff0;
+    border-left: 2px solid #ff0;
+    padding-left: 10px;
+    opacity: 0.8;
+}
+
+.thinking-text {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
 .line.error {
     color: #f00;
     border-left: 2px solid #f00;
@@ -149,6 +165,17 @@ body {
     font-family: inherit;
     font-size: inherit;
     outline: none;
+}
+
+#input:disabled {
+    color: #666;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#input:disabled::placeholder {
+    color: #ff0;
+    opacity: 0.8;
 }
 
 /* アバター切り替えUI用スタイル */

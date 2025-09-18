@@ -6,6 +6,7 @@ export class SoundManager {
     constructor(settings) {
         this.settings = settings;
         this.audioContext = null;
+        this.soundEnabled = true; // 音響効果の有効/無効フラグ
         this.initAudioContext();
     }
 
@@ -20,7 +21,7 @@ export class SoundManager {
 
     // タイプライター効果音を再生
     playTypeSound() {
-        if (!this.audioContext) return;
+        if (!this.audioContext || !this.soundEnabled) return;
 
         try {
             const oscillator = this.audioContext.createOscillator();
@@ -50,5 +51,17 @@ export class SoundManager {
         } catch (e) {
             // 音声再生エラーは無視
         }
+    }
+    
+    // 音響効果を停止
+    stopAllSounds() {
+        console.log('SoundManager: Stopping all sounds');
+        this.soundEnabled = false;
+    }
+    
+    // 音響効果を再開
+    resumeSounds() {
+        console.log('SoundManager: Resuming sounds');
+        this.soundEnabled = true;
     }
 }

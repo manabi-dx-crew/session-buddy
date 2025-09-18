@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // ウェルカムスクリーンをスキップした場合は初期プロンプトを即座に表示
         if (skipWelcome) {
+            // アバター設定を確実に実行
+            setupAvatarDisplayForSkipWelcome();
+            
             setTimeout(() => {
                 window.initialPromptsManager.displayInitialPrompt();
             }, 500);
@@ -53,3 +56,23 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('App config not found');
     }
 });
+
+/**
+ * ウェルカムスクリーンスキップ時のアバター設定
+ */
+function setupAvatarDisplayForSkipWelcome() {
+    // アバター画像をINU BUDDYに設定
+    const avatarImg = document.getElementById('avatar-img');
+    const avatarLabel = document.querySelector('.avatar-label');
+    
+    if (avatarImg) {
+        avatarImg.src = '/static/images/idle_inu.png';
+        avatarImg.alt = 'INU BUDDY';
+    }
+    
+    if (avatarLabel) {
+        avatarLabel.textContent = 'INU BUDDY';
+    }
+    
+    console.log('Avatar display set to INU BUDDY for skip welcome mode');
+}

@@ -276,7 +276,72 @@ python test_dify_direct.py
 - ネットワーク接続を確認
 - ブラウザの開発者ツールでエラーを確認
 
-#### 7. 応答が最適化されない（2025年9月18日変更）
+#### 7. 口パクアニメーション長時間継続問題（2025年9月18日解決済み）
+**症状**: テキスト表示完了後も口パクアニメーションが数秒〜十数秒継続する
+
+**原因**: 
+- タイプライター処理完了と口パクアニメーション停止が非同期
+- `stream_end`イベント待ちによる無駄な継続
+
+**解決方法**: 
+- タイプライターキューが空になった時点で500ms後に停止チェック
+- ストリーム終了時に200ms後の積極的停止チェック
+- 詳細デバッグログ追加で停止タイミングを可視化
+
+**技術的詳細**:
+```javascript
+// animation.js - 修正されたタイプライター完了処理
+_processQueue(element) {
+    if (this.typewriterQueue.length === 0) {
+        setTimeout(() => {
+            if (this.typewriterQueue.length === 0) {
+                this.stopTalking(); // 500ms後に停止
+            }
+        }, 500);
+    }
+}
+
+// ストリーム終了時の積極的チェック
+signalStreamEnd() {
+    setTimeout(() => {
+        if (!this.isTyping && this.typewriterQueue.length === 0) {
+            this.stopTalking(); // 200ms後に停止
+        }
+    }, 200);
+}
+```
+
+#### 8. テキスト表示の文字欠け問題（2025年9月18日解決済み）
+**症状**: 出力テキストが途中から始まる（例：「、勉強会運営...」の「私は」が欠ける）
+
+**原因**: 
+- 非同期DOM操作でのrace condition
+- `setTimeout(0)`による初回チャンク処理の遅延
+
+**解決方法**: 
+- `setTimeout(0)`を削除し、同期的なDOM要素作成と処理に変更
+- `aiTextElement`の即座取得と初回チャンク処理の同期化
+
+**技術的詳細**:
+```javascript
+// chat.js - 修正された初回チャンク処理
+if (!aiLine) {
+    aiLine = document.createElement('div');
+    aiLine.className = 'line ai';
+    aiLine.innerHTML = `<span class="ai-prompt">${this.settings.avatarName}&gt;</span> <span class="ai-text"></span>`;
+    this.output.appendChild(aiLine);
+    
+    // DOM要素を即座に取得（setTimeout削除）
+    aiTextElement = aiLine.querySelector('.ai-text');
+    
+    if (aiTextElement) {
+        this.animationManager.startTalking();
+        this.animationManager.appendText(aiTextElement, data.delta); // 初回チャンク即座処理
+    }
+}
+```
+
+#### 9. 応答が最適化されない（2025年9月18日変更）
 **注意**: 応答最適化機能は無効化されています
 - Dify APIの応答がそのまま表示されます
 - 上書き処理は完全に無効化済み
